@@ -205,13 +205,25 @@ export const StatsBar = (props: StatsBarProps) => {
           isInHeader={isInHeader}
           isMobile={isMobile}
         />
-        <PriceStatsMenu
-          period={pricePeriod}
-          currency={priceCurrency}
-          onPeriodChange={setPricePeriod}
-          onCurrencyChange={setPriceCurrency}
-        />
+        {(!isMobile || isInHeader) && (
+          <PriceStatsMenu
+            period={pricePeriod}
+            currency={priceCurrency}
+            onPeriodChange={setPricePeriod}
+            onCurrencyChange={setPriceCurrency}
+          />
+        )}
       </div>
+    ) : null;
+
+  const renderPriceMenu = () =>
+    priceStat ? (
+      <PriceStatsMenu
+        period={pricePeriod}
+        currency={priceCurrency}
+        onPeriodChange={setPricePeriod}
+        onCurrencyChange={setPriceCurrency}
+      />
     ) : null;
 
   const hasVisibleStats =
@@ -317,6 +329,7 @@ export const StatsBar = (props: StatsBarProps) => {
             sortDirection={sortDirection}
           />
         )}
+        {isMobile && renderPriceMenu()}
       </div>
     </Card>
   );
