@@ -111,6 +111,44 @@
         "default": true,
         "help": "保存视图、外观和统计显示偏好"
       },
+      { "name": "价格默认设置", "type": "title" },
+      {
+        "key": "priceTagRequiresLogin",
+        "name": "卡片价格标签需要登录查看",
+        "type": "switch",
+        "default": false,
+        "help": "仅控制节点卡片上的价格标签；统计栏服务器金额始终需要登录"
+      },
+      {
+        "key": "priceDefaultPeriod",
+        "name": "价格默认计费周期",
+        "type": "select",
+        "options": "total,monthly,daily",
+        "default": "monthly",
+        "help": "设置统计栏金额和节点统一金额的默认周期"
+      },
+      {
+        "key": "priceDefaultCurrency",
+        "name": "价格默认显示货币",
+        "type": "select",
+        "options": "USD,CNY",
+        "default": "USD",
+        "help": "设置统计栏金额的默认显示货币"
+      },
+      {
+        "key": "priceDefaultNormalize",
+        "name": "默认跟随计费周期",
+        "type": "switch",
+        "default": false,
+        "help": "开启后节点金额默认跟随上方选择的总价、每月或每日周期"
+      },
+      {
+        "key": "priceDefaultFollowCurrency",
+        "name": "默认节点金额跟随显示货币",
+        "type": "switch",
+        "default": false,
+        "help": "开启后节点卡片金额默认换算为统计栏所选货币"
+      },
       {
         "key": "selectedDefaultView",
         "name": "桌面端默认展示视图",

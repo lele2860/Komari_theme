@@ -49,6 +49,8 @@ export interface ThemeContextType {
   setPriceDisplayPeriod: (period: PriceDisplayPeriod) => void;
   priceDisplayCurrency: PriceDisplayCurrency;
   setPriceDisplayCurrency: (currency: PriceDisplayCurrency) => void;
+  priceNodeFollowCurrency: boolean;
+  setPriceNodeFollowCurrency: (enabled: boolean) => void;
   exchangeRateSource: ExchangeRateSource;
   setExchangeRateSource: (source: ExchangeRateSource) => void;
   manualCurrencyRates: string;
@@ -81,8 +83,10 @@ export const ThemeContext = createContext<ThemeContextType>({
   setPriceNormalizationEnabled: () => {},
   priceDisplayPeriod: "monthly",
   setPriceDisplayPeriod: () => {},
-  priceDisplayCurrency: "original",
+  priceDisplayCurrency: "USD",
   setPriceDisplayCurrency: () => {},
+  priceNodeFollowCurrency: false,
+  setPriceNodeFollowCurrency: () => {},
   exchangeRateSource: "auto",
   setExchangeRateSource: () => {},
   manualCurrencyRates: "USD=7.2,CAD=5.0",
@@ -193,6 +197,10 @@ export const useThemeManager = () => {
     selectThemeColor,
     selectedDefaultView,
     selectMobileDefaultView,
+    priceDefaultPeriod,
+    priceDefaultCurrency,
+    priceDefaultNormalize,
+    priceDefaultFollowCurrency,
   } = useAppConfig();
   const defaultstatusCardsVisibility = useAppConfig().statusCardsVisibility;
   const isMobile = useIsMobile();
@@ -237,22 +245,28 @@ export const useThemeManager = () => {
   const [priceNormalizationEnabled, setPriceNormalizationEnabled] =
     useStoredState<boolean>(
       "priceNormalizationEnabled",
-      false,
+      priceDefaultNormalize,
       (value): value is boolean => typeof value === "boolean"
     );
   const [priceDisplayPeriod, setPriceDisplayPeriod] =
     useStoredState<PriceDisplayPeriod>(
       "priceDisplayPeriod",
-      "monthly",
+      priceDefaultPeriod,
       (value): value is PriceDisplayPeriod =>
         value === "total" || value === "monthly" || value === "daily"
     );
   const [priceDisplayCurrency, setPriceDisplayCurrency] =
     useStoredState<PriceDisplayCurrency>(
       "priceDisplayCurrency",
-      "original",
+      priceDefaultCurrency,
       (value): value is PriceDisplayCurrency =>
-        value === "original" || value === "USD" || value === "CNY"
+        value === "USD" || value === "CNY"
+    );
+  const [priceNodeFollowCurrency, setPriceNodeFollowCurrency] =
+    useStoredState<boolean>(
+      "priceNodeFollowCurrency",
+      priceDefaultFollowCurrency,
+      (value): value is boolean => typeof value === "boolean"
     );
 
   const [exchangeRateSource, setExchangeRateSource] =
@@ -378,6 +392,8 @@ export const useThemeManager = () => {
     setPriceDisplayPeriod,
     priceDisplayCurrency,
     setPriceDisplayCurrency,
+    priceNodeFollowCurrency,
+    setPriceNodeFollowCurrency,
     exchangeRateSource,
     setExchangeRateSource,
     manualCurrencyRates,

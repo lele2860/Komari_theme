@@ -7,12 +7,6 @@ export type DisplayOptions = {
   networkSpeed: boolean;
 };
 
-export type PriceBreakdownEntry = {
-  total: number;
-  monthly: number;
-  daily: number;
-};
-
 export type StatsSnapshot = {
   onlineCount: number;
   totalCount: number;
@@ -29,11 +23,10 @@ export type StatsSnapshot = {
   totalPriceCny: number;
   monthlyPriceCny: number;
   dailyPriceCny: number;
-  priceByCurrency: Record<string, PriceBreakdownEntry>;
 };
 
 export type PriceDisplayPeriod = "total" | "monthly" | "daily";
-export type PriceDisplayCurrency = "original" | "USD" | "CNY";
+export type PriceDisplayCurrency = "USD" | "CNY";
 
 export type SortKey =
   | "trafficUp"

@@ -14,6 +14,11 @@ export interface ConfigOptions {
   tagDefaultColorList: string; // 标签默认颜色列表
   selectThemeColor: ColorType; // 默认主题颜色
   enableLocalStorage: boolean; // 是否启用本地存储
+  priceTagRequiresLogin: boolean; // 卡片价格标签是否需要登录
+  priceDefaultPeriod: "total" | "monthly" | "daily"; // 金额统计默认周期
+  priceDefaultCurrency: "USD" | "CNY"; // 金额统计默认货币
+  priceDefaultNormalize: boolean; // 是否默认统一节点金额周期
+  priceDefaultFollowCurrency: boolean; // 是否默认让节点金额跟随显示货币
   selectedDefaultView: ViewModeType; // 默认视图模式
   selectedDefaultAppearance: AppearanceType; // 默认外观模式
   statusCardsVisibility: string; // 状态卡片显示控制
@@ -64,6 +69,11 @@ export const DEFAULT_CONFIG: ConfigOptions = {
     "ruby,gray,gold,bronze,brown,yellow,amber,orange,tomato,red",
   selectThemeColor: "violet",
   enableLocalStorage: true,
+  priceTagRequiresLogin: false,
+  priceDefaultPeriod: "monthly",
+  priceDefaultCurrency: "USD",
+  priceDefaultNormalize: false,
+  priceDefaultFollowCurrency: false,
   selectedDefaultView: "grid",
   selectedDefaultAppearance: "system",
   statusCardsVisibility:

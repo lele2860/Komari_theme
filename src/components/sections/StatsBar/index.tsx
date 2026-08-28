@@ -8,32 +8,11 @@ import { GroupSelector } from "./GroupSelector";
 import { SortToggleMenu } from "./SortToggleMenu";
 import { StatsToggleMenu } from "./StatsToggleMenu";
 import { useLocale } from "@/config/hooks";
-import type {
-  StatsBarProps,
-  StatsSnapshot,
-  SortKey,
-} from "./types";
+import type { StatsBarProps, SortKey } from "./types";
 import { Card } from "@/components/ui/card";
 import { PriceStatsMenu } from "./PriceStatsMenu";
-import type {
-  PriceDisplayPeriod,
-} from "./types";
+import type { PriceDisplayPeriod } from "./types";
 export type { StatsBarProps, SortKey };
-
-const formatOriginalPrice = (
-  stats: StatsSnapshot,
-  period: PriceDisplayPeriod
-) => {
-  const key = period === "total" ? "total" : period;
-  const entries = Object.entries(stats.priceByCurrency || {}).filter(
-    ([, value]) => Number(value[key]) > 0
-  );
-  if (!entries.length) return "—";
-
-  return entries
-    .map(([currency, value]) => `${currency}${Number(value[key]).toFixed(2)}`)
-    .join(" + ");
-};
 
 interface StatEntry {
   key: string;
@@ -198,17 +177,12 @@ export const StatsBar = (props: StatsBarProps) => {
         ? t("statsBar.priceMonthly")
         : t("statsBar.priceDaily");
 
-    const amountText =
-      priceCurrency === "original"
-        ? formatOriginalPrice(stats, pricePeriod)
-        : formatMoney(amountByPeriod[pricePeriod], priceCurrency);
-
     return {
       key: "serverCost",
       label: t("statsBar.serverCost"),
       lines: loading
         ? ["..."]
-        : [`${periodLabel} ${amountText}`],
+        : [`${periodLabel} ${formatMoney(amountByPeriod[pricePeriod], priceCurrency)}`],
       isLabelVertical: !isMobile && isShowStatsInHeader,
       textLeft: true,
     };

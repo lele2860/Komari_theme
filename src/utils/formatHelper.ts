@@ -122,8 +122,11 @@ export const formatTrafficLimit = (
   return `总 ${limitText} (${typeText})`;
 };
 
-/** Currency used by the server cost summary and individual node prices. */
-export type PriceDisplayCurrency = "original" | "USD" | "CNY";
+/** Currency used by the server cost summary. */
+export type PriceDisplayCurrency = "USD" | "CNY";
+
+/** Currency used by an individual node price, including its original value. */
+export type NodePriceDisplayCurrency = PriceDisplayCurrency | "original";
 
 /** Price period used by the server cost summary. */
 export type PriceDisplayPeriod = "total" | "monthly" | "daily";
@@ -257,7 +260,7 @@ export const formatPriceForDisplay = (
   currency: string,
   billingCycle: number,
   normalization: PriceNormalizationPeriod = "original",
-  displayCurrency: PriceDisplayCurrency = "original",
+  displayCurrency: NodePriceDisplayCurrency = "original",
   rates: CurrencyRates = DEFAULT_CURRENCY_RATES_TO_CNY
 ) => {
   if (displayCurrency === "original") {
@@ -290,14 +293,9 @@ export const formatPriceForDisplay = (
 };
 
 /** Format a monetary value with a stable two-decimal currency display. */
-export type ConvertiblePriceDisplayCurrency = Exclude<
-  PriceDisplayCurrency,
-  "original"
->;
-
 export const formatMoney = (
   amount: number,
-  currency: ConvertiblePriceDisplayCurrency
+  currency: PriceDisplayCurrency
 ) =>
   new Intl.NumberFormat(currency === "USD" ? "en-US" : "zh-CN", {
     style: "currency",

@@ -46,6 +46,8 @@ export const PriceStatsMenu = memo(
       isExchangeRateLoading,
       refreshExchangeRates,
       currencyRates,
+      priceNodeFollowCurrency,
+      setPriceNodeFollowCurrency,
     } = useTheme();
     const usdToCnyRate = currencyRates.USD || USD_TO_CNY_RATE;
     const periods: Array<{ key: PriceDisplayPeriod; label: string }> = [
@@ -57,9 +59,8 @@ export const PriceStatsMenu = memo(
       key: PriceDisplayCurrency;
       label: string;
     }> = [
-      { key: "original", label: t("statsBar.currencyOriginal") },
-      { key: "CNY", label: t("statsBar.currencyCny") },
       { key: "USD", label: t("statsBar.currencyUsd") },
+      { key: "CNY", label: t("statsBar.currencyCny") },
     ];
 
     return (
@@ -107,6 +108,19 @@ export const PriceStatsMenu = memo(
               rate: usdToCnyRate.toFixed(4),
             })}
           </div>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+            {t("statsBar.nodePriceSettings")}
+          </DropdownMenuLabel>
+          <DropdownMenuItem
+            className="flex items-center justify-between cursor-pointer"
+            onSelect={(event) => event.preventDefault()}>
+            <span>{t("statsBar.nodePriceFollowCurrency")}</span>
+            <Switch
+              checked={priceNodeFollowCurrency}
+              onCheckedChange={setPriceNodeFollowCurrency}
+            />
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
             {t("statsBar.exchangeRateSettings")}
