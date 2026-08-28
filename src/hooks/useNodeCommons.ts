@@ -1,5 +1,10 @@
 import { useMemo, useState } from "react";
-import { convertPriceToCny, formatPrice, USD_TO_CNY_RATE } from "@/utils";
+import {
+  convertPriceToCny,
+  formatPrice,
+  getDailyPriceCny,
+  USD_TO_CNY_RATE,
+} from "@/utils";
 import type { NodeData } from "@/types/node";
 import type { RpcNodeStatus } from "@/types/rpc";
 import { useNodeData } from "@/contexts/NodeDataContext";
@@ -7,12 +12,14 @@ import { useLiveData } from "@/contexts/LiveDataContext";
 import type { NodeDataContextType } from "@/contexts/NodeDataContext";
 import type { LiveDataContextType } from "@/contexts/LiveDataContext";
 import { useLocale, useAppConfig } from "@/config/hooks";
+import { useTheme } from "@/hooks/useTheme";
 
 type SortKey =
   | "trafficUp"
   | "trafficDown"
   | "speedUp"
   | "speedDown"
+  | "dailyPrice"
   | "country"
   | null;
 type SortOrder = "asc" | "desc";
@@ -86,9 +93,31 @@ export const useNodeListCommons = (searchTerm: string) => {
           }
         }
 
+        if (sortKey === "dailyPrice") {
+          const aValue = getDailyPriceCny(
+            a.price,
+            a.currency,
+            a.billing_cycle
+          );
+          const bValue = getDailyPriceCny(
+            b.price,
+            b.currency,
+            b.billing_cycle
+          );
+
+          // Keep nodes without a comparable price at the end in either
+          // direction so the sort remains useful for mixed node metadata.
+          if (aValue === null || bValue === null) {
+            if (aValue === null && bValue === null) return 0;
+            return aValue === null ? 1 : -1;
+          }
+
+          return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
+        }
+
         if (sortKey && sortKey !== "country") {
           const sortMap: Record<
-            Exclude<SortKey, "country" | null>,
+            Exclude<SortKey, "country" | "dailyPrice" | null>,
             keyof RpcNodeStatus
           > = {
             trafficUp: "net_total_up",
@@ -213,7 +242,13 @@ export const useNodeCommons = (node: NodeData & { stats?: any }) => {
   const { stats } = node;
   const { t } = useLocale();
   const isOnline = stats ? stats.online : false;
-  const price = formatPrice(node.price, node.currency, node.billing_cycle);
+  const { priceNormalization } = useTheme();
+  const price = formatPrice(
+    node.price,
+    node.currency,
+    node.billing_cycle,
+    priceNormalization
+  );
 
   const cpuUsage = stats && isOnline ? stats.cpu : 0;
   const memUsage =

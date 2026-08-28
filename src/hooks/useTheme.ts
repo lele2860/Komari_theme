@@ -3,6 +3,7 @@ import { useIsMobile } from "@/hooks/useMobile";
 import { useAppConfig } from "@/config";
 import { DEFAULT_CONFIG, allAppearance } from "@/config/default";
 import type { AppearanceType, ColorType, ViewModeType } from "@/config/default";
+import type { PriceNormalizationPeriod } from "@/utils";
 
 type themeAppearanceType = "light" | "dark";
 const defaultThemeAppearance: themeAppearanceType = "light";
@@ -26,6 +27,8 @@ export interface ThemeContextType {
   setStatusCardsVisibility: (
     visibility: Partial<ThemeContextType["statusCardsVisibility"]>
   ) => void;
+  priceNormalization: PriceNormalizationPeriod;
+  setPriceNormalization: (period: PriceNormalizationPeriod) => void;
 }
 
 export const ThemeContext = createContext<ThemeContextType>({
@@ -45,6 +48,8 @@ export const ThemeContext = createContext<ThemeContextType>({
     networkSpeed: true,
   },
   setStatusCardsVisibility: () => {},
+  priceNormalization: "original",
+  setPriceNormalization: () => {},
 });
 
 /**
@@ -176,6 +181,14 @@ export const useThemeManager = () => {
     })()
   );
 
+  const [priceNormalization, setPriceNormalization] =
+    useStoredState<PriceNormalizationPeriod>(
+      "priceDisplayNormalization",
+      "original",
+      (value): value is PriceNormalizationPeriod =>
+        value === "original" || value === "monthly" || value === "yearly"
+    );
+
   // Add newly introduced statistics for visitors who already have saved display settings.
   useEffect(() => {
     if (statusCardsVisibility.trafficUsage === undefined) {
@@ -205,6 +218,8 @@ export const useThemeManager = () => {
     setViewMode,
     statusCardsVisibility,
     setStatusCardsVisibility: handleSetStatusCardsVisibility,
+    priceNormalization,
+    setPriceNormalization,
   };
 };
 export const useTheme = () => {

@@ -58,11 +58,18 @@ export const formatUptime = (seconds: number) => {
 export const formatPrice = (
   price: number,
   currency: string,
-  billingCycle: number
+  billingCycle: number,
+  normalization: PriceNormalizationPeriod = "original"
 ) => {
   if (price === -1) return "免费";
   if (price === 0) return "";
   if (!currency || !billingCycle) return "N/A";
+
+  if (normalization !== "original" && billingCycle > 0) {
+    const days = normalization === "monthly" ? 30 : 365;
+    const periodLabel = normalization === "monthly" ? "月" : "年";
+    return `${currency}${((price * days) / billingCycle).toFixed(2)}/${periodLabel}`;
+  }
 
   let cycleStr = `${billingCycle}天`;
   if (billingCycle < 0) {
@@ -85,6 +92,9 @@ export const formatPrice = (
 
   return `${currency}${price.toFixed(2)}/${cycleStr}`;
 };
+
+/** Display mode for individual node prices. */
+export type PriceNormalizationPeriod = "original" | "monthly" | "yearly";
 
 export const formatTrafficLimit = (
   limit?: number,
@@ -150,6 +160,28 @@ export const convertPriceToCny = (
   }
 
   return null;
+};
+
+/**
+ * Return a node's comparable daily price in CNY. Free/zero-priced nodes are
+ * treated as zero; unknown currencies or billing cycles are left unsortable.
+ */
+export const getDailyPriceCny = (
+  price: number,
+  currency: string,
+  billingCycle: number
+): number | null => {
+  const numericPrice = Number(price);
+  if (!Number.isFinite(numericPrice)) return null;
+  if (numericPrice <= 0) return 0;
+
+  const priceCny = convertPriceToCny(numericPrice, currency);
+  const cycle = Number(billingCycle);
+  if (priceCny === null || !Number.isFinite(cycle) || cycle <= 0) {
+    return null;
+  }
+
+  return priceCny / cycle;
 };
 
 /** Format a monetary value with a stable two-decimal currency display. */

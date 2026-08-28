@@ -26,6 +26,7 @@ export const SortToggleMenu = memo(
         | "trafficDown"
         | "speedUp"
         | "speedDown"
+        | "dailyPrice"
         | "country";
       label: string;
     }[] = [
@@ -33,6 +34,7 @@ export const SortToggleMenu = memo(
       { key: "trafficDown", label: t("sort.trafficDown") },
       { key: "speedUp", label: t("sort.speedUp") },
       { key: "speedDown", label: t("sort.speedDown") },
+      { key: "dailyPrice", label: t("sort.dailyPrice") },
       { key: "country", label: t("sort.country") },
     ];
 

@@ -33,6 +33,7 @@ export type SortKey =
   | "trafficDown"
   | "speedUp"
   | "speedDown"
+  | "dailyPrice"
   | "country"
   | null;
 

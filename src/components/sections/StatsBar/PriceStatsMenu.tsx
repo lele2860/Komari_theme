@@ -1,6 +1,7 @@
 import { memo } from "react";
 import { Check, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,11 +11,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useLocale } from "@/config/hooks";
+import { useTheme } from "@/hooks/useTheme";
 import { USD_TO_CNY_RATE } from "@/utils";
 import type {
   PriceDisplayCurrency,
   PriceDisplayPeriod,
 } from "./types";
+import type { PriceNormalizationPeriod } from "@/utils";
 
 interface PriceStatsMenuProps {
   period: PriceDisplayPeriod;
@@ -31,6 +34,7 @@ export const PriceStatsMenu = memo(
     onCurrencyChange,
   }: PriceStatsMenuProps) => {
     const { t } = useLocale();
+    const { priceNormalization, setPriceNormalization } = useTheme();
     const periods: Array<{ key: PriceDisplayPeriod; label: string }> = [
       { key: "total", label: t("statsBar.priceTotal") },
       { key: "monthly", label: t("statsBar.priceMonthly") },
@@ -42,6 +46,13 @@ export const PriceStatsMenu = memo(
     }> = [
       { key: "USD", label: t("statsBar.currencyUsd") },
       { key: "CNY", label: t("statsBar.currencyCny") },
+    ];
+    const normalizedPeriods: Array<{
+      key: Exclude<PriceNormalizationPeriod, "original">;
+      label: string;
+    }> = [
+      { key: "monthly", label: t("statsBar.priceMonthly") },
+      { key: "yearly", label: t("statsBar.priceYearly") },
     ];
 
     return (
@@ -87,6 +98,43 @@ export const PriceStatsMenu = memo(
           <div className="px-2 py-1 text-xs text-muted-foreground">
             {t("statsBar.currencyRate", { rate: USD_TO_CNY_RATE })}
           </div>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+            {t("statsBar.priceNormalization")}
+          </DropdownMenuLabel>
+          <DropdownMenuItem
+            className="flex items-center justify-between cursor-pointer"
+            onSelect={(event) => event.preventDefault()}>
+            <span>{t("statsBar.priceNormalize")}</span>
+            <Switch
+              checked={priceNormalization !== "original"}
+              onCheckedChange={(checked) =>
+                setPriceNormalization(
+                  checked
+                    ? priceNormalization === "yearly"
+                      ? "yearly"
+                      : "monthly"
+                    : "original"
+                )
+              }
+            />
+          </DropdownMenuItem>
+          {priceNormalization !== "original" && (
+            <>
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                {t("statsBar.priceNormalizePeriod")}
+              </DropdownMenuLabel>
+              {normalizedPeriods.map(({ key, label }) => (
+                <DropdownMenuItem
+                  key={key}
+                  className="flex items-center justify-between cursor-pointer"
+                  onSelect={() => setPriceNormalization(key)}>
+                  <span>{label}</span>
+                  {priceNormalization === key && <Check className="h-4 w-4" />}
+                </DropdownMenuItem>
+              ))}
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     );
