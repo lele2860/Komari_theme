@@ -1,6 +1,6 @@
 <div align="center">
 
-<img width="300" src="./preview.png" alt="PurCarte Theme Preview">
+<img width="300" src="./public/examples/PurCarte-Theme-Config-New.png" alt="PurCarte Theme Preview">
 
 ## ✨ PurCarte ✨
 
@@ -17,7 +17,7 @@
 
 ### 安装与启用
 
-1.  前往 [Releases](https://github.com/Montia37/komari-theme-purcarte/releases) 页面下载最新的 `komari-theme-purcarte.zip` 文件。
+1.  前往 [Releases](https://github.com/lele2860/Komari_theme/releases) 页面下载最新的 `komari-theme-purcarte.zip` 文件。
 2.  进入 Komari 后台，上传 `zip` 压缩包并启用本主题。
 
 ### 配置背景图片
@@ -327,8 +327,8 @@
 1.  **克隆仓库**
 
     ```bash
-    git clone https://github.com/Montia37/komari-theme-purcarte.git
-    cd komari-theme-purcarte
+    git clone https://github.com/lele2860/Komari_theme.git
+    cd Komari_theme
     ```
 
 2.  **安装依赖**

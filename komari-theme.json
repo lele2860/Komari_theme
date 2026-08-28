@@ -1,0 +1,344 @@
+{
+  "name": "Komari Theme PurCarte",
+  "short": "PurCarte",
+  "description": "A frosted glass theme for Komari",
+  "version": "0.1.0",
+  "author": "lele2860",
+  "url": "https://github.com/lele2860/Komari_theme",
+  "preview": "preview.png",
+  "configuration": {
+    "type": "managed",
+    "data": [
+      { "name": "前端管理开关", "type": "title" },
+      {
+        "key": "isShowConfigEditButtonInLogined",
+        "name": "是否在登录时显示配置编辑按钮",
+        "type": "switch",
+        "default": true,
+        "help": "启用后在登录状态下显示主题配置编辑按钮"
+      },
+      { "name": "样式调整", "type": "title" },
+      {
+        "key": "mainWidth",
+        "name": "主要内容宽度",
+        "type": "number",
+        "default": 85,
+        "help": "主要内容宽度，单位为视口宽度百分比"
+      },
+      {
+        "key": "backgroundImage",
+        "name": "桌面端背景图片链接",
+        "type": "string",
+        "default": "/assets/Moonlit-Scenery.webp",
+        "help": "支持单个链接或使用 | 分隔亮色和暗色模式"
+      },
+      {
+        "key": "backgroundImageMobile",
+        "name": "移动端背景图片链接",
+        "type": "string",
+        "default": "",
+        "help": "留空时使用桌面端背景"
+      },
+      {
+        "key": "enableVideoBackground",
+        "name": "启用视频背景",
+        "type": "switch",
+        "default": false,
+        "help": "启用后使用视频作为背景"
+      },
+      {
+        "key": "videoBackgroundUrl",
+        "name": "桌面端视频背景链接",
+        "type": "string",
+        "default": "/assets/LanternRivers_1080p15fps2Mbps3s.mp4",
+        "help": "视频背景链接，支持使用 | 区分亮色和暗色模式"
+      },
+      {
+        "key": "videoBackgroundUrlMobile",
+        "name": "移动端视频背景链接",
+        "type": "string",
+        "default": "",
+        "help": "留空时使用桌面端视频背景"
+      },
+      {
+        "key": "backgroundAlignment",
+        "name": "背景对齐方式",
+        "type": "string",
+        "default": "cover,top",
+        "help": "使用大小和位置，例如 cover,top"
+      },
+      {
+        "key": "blurValue",
+        "name": "磨砂玻璃模糊值",
+        "type": "number",
+        "default": 10,
+        "help": "数值越大磨砂效果越明显"
+      },
+      {
+        "key": "blurBackgroundColor",
+        "name": "磨砂玻璃背景色",
+        "type": "string",
+        "default": "rgba(255, 255, 255, 0.5)|rgba(0, 0, 0, 0.5)",
+        "help": "使用 | 分隔亮色和暗色模式的颜色值"
+      },
+      {
+        "key": "enableTransparentTags",
+        "name": "启用标签透明背景",
+        "type": "switch",
+        "default": true,
+        "help": "启用后标签使用透明背景"
+      },
+      {
+        "key": "tagDefaultColorList",
+        "name": "标签默认颜色列表",
+        "type": "string",
+        "default": "ruby,gray,gold,bronze,brown,yellow,amber,orange,tomato,red",
+        "help": "使用逗号分隔颜色名称"
+      },
+      {
+        "key": "selectThemeColor",
+        "name": "默认主题颜色",
+        "type": "select",
+        "options": "gray,gold,bronze,brown,yellow,amber,orange,tomato,red,ruby,crimson,pink,plum,purple,violet,iris,indigo,blue,cyan,teal,jade,green,grass,lime,mint,sky",
+        "default": "violet",
+        "help": "选择 Radix 主题颜色"
+      },
+      { "name": "浏览器本地存储配置", "type": "title" },
+      {
+        "key": "enableLocalStorage",
+        "name": "启用 localStorage 配置",
+        "type": "switch",
+        "default": true,
+        "help": "保存视图、外观和统计显示偏好"
+      },
+      {
+        "key": "selectedDefaultView",
+        "name": "桌面端默认展示视图",
+        "type": "select",
+        "options": "grid,table,compact",
+        "default": "grid",
+        "help": "选择网格、表格或紧凑视图"
+      },
+      {
+        "key": "selectedDefaultAppearance",
+        "name": "默认外观",
+        "type": "select",
+        "options": "system,light,dark",
+        "default": "system",
+        "help": "选择浅色、深色或跟随系统"
+      },
+      {
+        "key": "statusCardsVisibility",
+        "name": "状态卡片显示控制",
+        "type": "string",
+        "default": "currentTime:true,currentOnline:true,regionOverview:true,trafficOverview:true,trafficUsage:true,networkSpeed:true",
+        "help": "格式为 card:true/card:false，多个卡片使用逗号分隔"
+      },
+      { "name": "标题栏设置", "type": "title" },
+      {
+        "key": "selectedHeaderStyle",
+        "name": "标题栏样式",
+        "type": "select",
+        "options": "fixed,levitation",
+        "default": "fixed",
+        "help": "选择固定或悬浮标题栏"
+      },
+      {
+        "key": "enableLogo",
+        "name": "启用标题栏左侧 Logo",
+        "type": "switch",
+        "default": false,
+        "help": "在标题栏左侧显示 Logo"
+      },
+      {
+        "key": "logoUrl",
+        "name": "Logo 图片链接",
+        "type": "string",
+        "default": "/assets/logo.png",
+        "help": "Logo 图片链接"
+      },
+      {
+        "key": "enableTitle",
+        "name": "启用标题栏标题",
+        "type": "switch",
+        "default": true,
+        "help": "在标题栏左侧显示标题"
+      },
+      {
+        "key": "titleText",
+        "name": "标题栏标题文本",
+        "type": "string",
+        "default": "",
+        "help": "留空时使用站点标题"
+      },
+      {
+        "key": "enableSearchButton",
+        "name": "启用搜索按钮",
+        "type": "switch",
+        "default": true,
+        "help": "在标题栏显示搜索按钮"
+      },
+      {
+        "key": "enableAdminButton",
+        "name": "启用管理按钮",
+        "type": "switch",
+        "default": true,
+        "help": "在标题栏显示管理按钮"
+      },
+      { "name": "底栏设置", "type": "title" },
+      {
+        "key": "selectedFooterStyle",
+        "name": "底栏样式",
+        "type": "select",
+        "options": "fixed,levitation,followContent,hidden",
+        "default": "fixed",
+        "help": "选择固定、悬浮、跟随内容或隐藏"
+      },
+      { "name": "内容设置", "type": "title" },
+      {
+        "key": "enableJsonRPC2Api",
+        "name": "启用 JSON-RPC2 API 适配",
+        "type": "switch",
+        "default": false,
+        "help": "在支持的 Komari 版本中使用 JSON-RPC2 API"
+      },
+      {
+        "key": "isShowStatsInHeader",
+        "name": "是否在标题栏中显示统计信息",
+        "type": "switch",
+        "default": false,
+        "help": "在桌面端标题栏中显示统计信息"
+      },
+      {
+        "key": "mergeGroupsWithStats",
+        "name": "合并分组栏与统计栏",
+        "type": "switch",
+        "default": false,
+        "help": "将分组选择器合并到统计栏"
+      },
+      {
+        "key": "enableStatsBar",
+        "name": "启用统计栏",
+        "type": "switch",
+        "default": true,
+        "help": "显示顶部统计栏"
+      },
+      {
+        "key": "enableSortControl",
+        "name": "启用排序控制",
+        "type": "switch",
+        "default": true,
+        "help": "支持按流量、网速和国家/地区排序"
+      },
+      {
+        "key": "isOfflineNodesBehind",
+        "name": "启用离线节点置后显示",
+        "type": "switch",
+        "default": false,
+        "help": "将离线节点自动置后"
+      },
+      {
+        "key": "enableGroupedBar",
+        "name": "启用分组栏",
+        "type": "switch",
+        "default": true,
+        "help": "显示服务器分组栏"
+      },
+      {
+        "key": "defaultSelectedGroup",
+        "name": "默认选择展示分组",
+        "type": "string",
+        "default": "",
+        "help": "留空时默认展示所有节点"
+      },
+      {
+        "key": "selectMobileDefaultView",
+        "name": "移动端默认展示视图",
+        "type": "select",
+        "options": "grid,table,compact",
+        "default": "grid",
+        "help": "选择移动端默认视图"
+      },
+      {
+        "key": "enableSwap",
+        "name": "启用 SWAP 显示",
+        "type": "switch",
+        "default": true,
+        "help": "显示 SWAP 信息"
+      },
+      {
+        "key": "pingChartTimeInPreview",
+        "name": "预览详情的延迟图表时间范围",
+        "type": "number",
+        "default": 1,
+        "help": "单位为小时"
+      },
+      {
+        "key": "isShowHWBarInCard",
+        "name": "是否在卡片中显示硬件信息栏",
+        "type": "switch",
+        "default": true,
+        "help": "显示 CPU、内存和硬盘总量"
+      },
+      {
+        "key": "isShowValueUnderProgressBar",
+        "name": "是否在流量进度条下方显示数值",
+        "type": "switch",
+        "default": false,
+        "help": "显示进度条对应的实际数值"
+      },
+      {
+        "key": "selectTrafficProgressStyle",
+        "name": "流量进度条样式",
+        "type": "select",
+        "options": "circular,linear",
+        "default": "linear",
+        "help": "选择环形或线形进度条"
+      },
+      {
+        "key": "enableListItemProgressBar",
+        "name": "启用列表视图进度条",
+        "type": "switch",
+        "default": true,
+        "help": "在列表视图显示进度条"
+      },
+      { "name": "Instance 设置", "type": "title" },
+      {
+        "key": "enableInstanceDetail",
+        "name": "启用 Instance 详情信息",
+        "type": "switch",
+        "default": true,
+        "help": "显示节点详情"
+      },
+      {
+        "key": "enablePingChart",
+        "name": "启用延迟图表",
+        "type": "switch",
+        "default": true,
+        "help": "显示延迟图表"
+      },
+      {
+        "key": "enableConnectBreaks",
+        "name": "启用连接断点",
+        "type": "switch",
+        "default": false,
+        "help": "在延迟图中标记连接断点"
+      },
+      {
+        "key": "pingChartMaxPoints",
+        "name": "延迟图表最大渲染点数",
+        "type": "number",
+        "default": 0,
+        "help": "0 表示不限制"
+      },
+      { "name": "UI 自定义", "type": "title" },
+      {
+        "key": "customTexts",
+        "name": "自定义 UI 文本",
+        "type": "string",
+        "default": "",
+        "help": "使用主题内置文本 key:value 格式"
+      }
+    ]
+  }
+}

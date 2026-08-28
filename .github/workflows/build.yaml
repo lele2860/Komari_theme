@@ -2,6 +2,11 @@ name: Build and Release Assets
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: "发布版本号（不带 v，例如 1.2.3；留空则使用运行号）"
+        required: false
+        type: string
   push:
     tags:
       - "v*"
@@ -33,10 +38,17 @@ jobs:
       - name: Build project
         run: yarn build
 
-      - name: Update theme configuration
+      - name: Resolve release version
         run: |
-          # Extract version from tag (remove 'v' prefix)
-          VERSION=${GITHUB_REF_NAME#v}
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+            if [ -z "$VERSION" ]; then
+              VERSION="0.0.${GITHUB_RUN_NUMBER}"
+            fi
+          else
+            # Extract version from tag (remove 'v' prefix)
+            VERSION=${GITHUB_REF_NAME#v}
+          fi
 
           # Validate semantic version format (X.Y.Z)
           if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
@@ -46,9 +58,12 @@ jobs:
           fi
 
           echo "Valid semantic version detected: $VERSION"
-          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
+          echo "CHANGELOG=Automated release ${VERSION}." >> "$GITHUB_ENV"
 
-          # Update komari-theme.json with new version
+      - name: Update theme configuration
+        run: |
+          # Update komari-theme.json with the resolved release version
           jq --arg version "$VERSION" \
               '.version = $version' \
               komari-theme.json > komari-theme-updated.json
@@ -57,6 +72,18 @@ jobs:
 
           echo "Updated theme configuration:"
           cat komari-theme.json
+
+      - name: Prepare preview image
+        run: |
+          if [ ! -f preview.png ]; then
+            SOURCE_PREVIEW="public/examples/PurCarte-Theme-Config-New.png"
+            if [ ! -f "$SOURCE_PREVIEW" ]; then
+              echo "No preview image found at preview.png or $SOURCE_PREVIEW"
+              exit 1
+            fi
+            cp "$SOURCE_PREVIEW" preview.png
+            echo "Using $SOURCE_PREVIEW as the release preview image"
+          fi
 
       - name: Verify required files exist
         run: |
@@ -100,13 +127,14 @@ jobs:
           echo "EOF" >> $GITHUB_ENV
 
       - name: Create Release
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        if: success() && (github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v'))
         uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
+          tag_name: v${{ env.VERSION }}
+          name: Release v${{ env.VERSION }}
+          target_commitish: ${{ github.sha }}
           body: ${{ env.CHANGELOG }}
           draft: false
           prerelease: false

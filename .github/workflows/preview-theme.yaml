@@ -47,6 +47,18 @@ jobs:
           echo "Updated theme configuration:"
           cat komari-theme.json
 
+      - name: Prepare preview image
+        run: |
+          if [ ! -f preview.png ]; then
+            SOURCE_PREVIEW="public/examples/PurCarte-Theme-Config-New.png"
+            if [ ! -f "$SOURCE_PREVIEW" ]; then
+              echo "No preview image found at preview.png or $SOURCE_PREVIEW"
+              exit 1
+            fi
+            cp "$SOURCE_PREVIEW" preview.png
+            echo "Using $SOURCE_PREVIEW as the preview image"
+          fi
+
       - name: Verify required files exist
         run: |
           echo "Checking required files..."
