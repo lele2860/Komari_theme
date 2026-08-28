@@ -367,21 +367,19 @@ export const StatsBar = (props: StatsBarProps) => {
           </span>
         )}
       </div>
-      <div className="absolute right-2 top-2">
+      <div className="absolute right-2 top-2 z-10 flex items-center gap-1">
         <StatsToggleMenu
           displayOptions={displayOptions}
           setDisplayOptions={setDisplayOptions}
         />
-      </div>
-      {enableSortControl && (
-        <div className="absolute right-2">
+        {enableSortControl && (
           <SortToggleMenu
             onSort={handleSort}
             sortKey={sortKey}
             sortDirection={sortDirection}
           />
-        </div>
-      )}
+        )}
+      </div>
     </Card>
   );
 };
