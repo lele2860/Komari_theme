@@ -56,7 +56,7 @@ export const formatUptime = (seconds: number) => {
 };
 
 /** Display mode for individual node prices. */
-export type PriceNormalizationPeriod = "original" | "monthly" | "yearly";
+export type PriceNormalizationPeriod = "original" | "monthly" | "daily";
 
 /** Exchange rates expressed as CNY for one unit of the currency. */
 export type CurrencyRates = Record<string, number>;
@@ -80,31 +80,26 @@ export const formatPrice = (
   if (!currency || !billingCycle) return "N/A";
 
   if (normalization !== "original" && billingCycle > 0) {
-    const days = normalization === "monthly" ? 30 : 365;
-    const periodLabel = normalization === "monthly" ? "月" : "年";
+    const days = normalization === "monthly" ? 30 : 1;
+    const periodLabel = normalization === "monthly" ? "月" : "日";
     return `${currency}${((price * days) / billingCycle).toFixed(2)}/${periodLabel}`;
   }
 
-  let cycleStr = `${billingCycle}天`;
-  if (billingCycle < 0) {
-    return `${currency}${price.toFixed(2)}`;
-  } else if (billingCycle === 30 || billingCycle === 31) {
-    cycleStr = "月";
-  } else if (billingCycle >= 89 && billingCycle <= 92) {
-    cycleStr = "季";
-  } else if (billingCycle >= 180 && billingCycle <= 183) {
-    cycleStr = "半年";
-  } else if (billingCycle >= 364 && billingCycle <= 366) {
-    cycleStr = "年";
-  } else if (billingCycle >= 730 && billingCycle <= 732) {
-    cycleStr = "两年";
-  } else if (billingCycle >= 1095 && billingCycle <= 1097) {
-    cycleStr = "三年";
-  } else if (billingCycle >= 1825 && billingCycle <= 1827) {
-    cycleStr = "五年";
-  }
+  const cycleStr = getBillingCycleLabel(billingCycle);
+  return billingCycle < 0
+    ? `${currency}${price.toFixed(2)}`
+    : `${currency}${price.toFixed(2)}/${cycleStr}`;
+};
 
-  return `${currency}${price.toFixed(2)}/${cycleStr}`;
+const getBillingCycleLabel = (billingCycle: number) => {
+  if (billingCycle === 30 || billingCycle === 31) return "月";
+  if (billingCycle >= 89 && billingCycle <= 92) return "季";
+  if (billingCycle >= 180 && billingCycle <= 183) return "半年";
+  if (billingCycle >= 364 && billingCycle <= 366) return "年";
+  if (billingCycle >= 730 && billingCycle <= 732) return "两年";
+  if (billingCycle >= 1095 && billingCycle <= 1097) return "三年";
+  if (billingCycle >= 1825 && billingCycle <= 1827) return "五年";
+  return `${billingCycle}天`;
 };
 
 export const formatTrafficLimit = (
@@ -127,8 +122,8 @@ export const formatTrafficLimit = (
   return `总 ${limitText} (${typeText})`;
 };
 
-/** Currency used by the server cost summary. */
-export type PriceDisplayCurrency = "USD" | "CNY";
+/** Currency used by the server cost summary and individual node prices. */
+export type PriceDisplayCurrency = "original" | "USD" | "CNY";
 
 /** Price period used by the server cost summary. */
 export type PriceDisplayPeriod = "total" | "monthly" | "daily";
@@ -253,10 +248,56 @@ export const getDailyPriceCny = (
   return priceCny / cycle;
 };
 
+/**
+ * Format a node price in its original currency, or convert it to the selected
+ * display currency before applying the requested billing period.
+ */
+export const formatPriceForDisplay = (
+  price: number,
+  currency: string,
+  billingCycle: number,
+  normalization: PriceNormalizationPeriod = "original",
+  displayCurrency: PriceDisplayCurrency = "original",
+  rates: CurrencyRates = DEFAULT_CURRENCY_RATES_TO_CNY
+) => {
+  if (displayCurrency === "original") {
+    return formatPrice(price, currency, billingCycle, normalization);
+  }
+  if (price === -1) return "免费";
+  if (price === 0) return "";
+  if (!currency || !billingCycle) return "N/A";
+
+  const priceCny = convertPriceToCny(price, currency, rates);
+  if (priceCny === null) {
+    return formatPrice(price, currency, billingCycle, normalization);
+  }
+
+  const usdRate = rates.USD || DEFAULT_CURRENCY_RATES_TO_CNY.USD;
+  const amount = displayCurrency === "USD" ? priceCny / usdRate : priceCny;
+  const symbol = displayCurrency === "USD" ? "$" : "¥";
+  const formattedAmount = (value: number) => `${symbol}${value.toFixed(2)}`;
+
+  if (normalization === "monthly" && billingCycle > 0) {
+    return `${formattedAmount((amount * 30) / billingCycle)}/月`;
+  }
+  if (normalization === "daily" && billingCycle > 0) {
+    return `${formattedAmount(amount / billingCycle)}/日`;
+  }
+
+  return billingCycle < 0
+    ? formattedAmount(amount)
+    : `${formattedAmount(amount)}/${getBillingCycleLabel(billingCycle)}`;
+};
+
 /** Format a monetary value with a stable two-decimal currency display. */
+export type ConvertiblePriceDisplayCurrency = Exclude<
+  PriceDisplayCurrency,
+  "original"
+>;
+
 export const formatMoney = (
   amount: number,
-  currency: PriceDisplayCurrency
+  currency: ConvertiblePriceDisplayCurrency
 ) =>
   new Intl.NumberFormat(currency === "USD" ? "en-US" : "zh-CN", {
     style: "currency",

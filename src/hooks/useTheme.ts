@@ -16,7 +16,8 @@ import {
 } from "@/utils";
 import type {
   CurrencyRates,
-  PriceNormalizationPeriod,
+  PriceDisplayCurrency,
+  PriceDisplayPeriod,
 } from "@/utils";
 
 type themeAppearanceType = "light" | "dark";
@@ -42,8 +43,12 @@ export interface ThemeContextType {
   setStatusCardsVisibility: (
     visibility: Partial<ThemeContextType["statusCardsVisibility"]>
   ) => void;
-  priceNormalization: PriceNormalizationPeriod;
-  setPriceNormalization: (period: PriceNormalizationPeriod) => void;
+  priceNormalizationEnabled: boolean;
+  setPriceNormalizationEnabled: (enabled: boolean) => void;
+  priceDisplayPeriod: PriceDisplayPeriod;
+  setPriceDisplayPeriod: (period: PriceDisplayPeriod) => void;
+  priceDisplayCurrency: PriceDisplayCurrency;
+  setPriceDisplayCurrency: (currency: PriceDisplayCurrency) => void;
   exchangeRateSource: ExchangeRateSource;
   setExchangeRateSource: (source: ExchangeRateSource) => void;
   manualCurrencyRates: string;
@@ -72,8 +77,12 @@ export const ThemeContext = createContext<ThemeContextType>({
     networkSpeed: true,
   },
   setStatusCardsVisibility: () => {},
-  priceNormalization: "original",
-  setPriceNormalization: () => {},
+  priceNormalizationEnabled: false,
+  setPriceNormalizationEnabled: () => {},
+  priceDisplayPeriod: "monthly",
+  setPriceDisplayPeriod: () => {},
+  priceDisplayCurrency: "original",
+  setPriceDisplayCurrency: () => {},
   exchangeRateSource: "auto",
   setExchangeRateSource: () => {},
   manualCurrencyRates: "USD=7.2,CAD=5.0",
@@ -225,12 +234,25 @@ export const useThemeManager = () => {
     })()
   );
 
-  const [priceNormalization, setPriceNormalization] =
-    useStoredState<PriceNormalizationPeriod>(
-      "priceDisplayNormalization",
+  const [priceNormalizationEnabled, setPriceNormalizationEnabled] =
+    useStoredState<boolean>(
+      "priceNormalizationEnabled",
+      false,
+      (value): value is boolean => typeof value === "boolean"
+    );
+  const [priceDisplayPeriod, setPriceDisplayPeriod] =
+    useStoredState<PriceDisplayPeriod>(
+      "priceDisplayPeriod",
+      "monthly",
+      (value): value is PriceDisplayPeriod =>
+        value === "total" || value === "monthly" || value === "daily"
+    );
+  const [priceDisplayCurrency, setPriceDisplayCurrency] =
+    useStoredState<PriceDisplayCurrency>(
+      "priceDisplayCurrency",
       "original",
-      (value): value is PriceNormalizationPeriod =>
-        value === "original" || value === "monthly" || value === "yearly"
+      (value): value is PriceDisplayCurrency =>
+        value === "original" || value === "USD" || value === "CNY"
     );
 
   const [exchangeRateSource, setExchangeRateSource] =
@@ -350,8 +372,12 @@ export const useThemeManager = () => {
     setViewMode,
     statusCardsVisibility,
     setStatusCardsVisibility: handleSetStatusCardsVisibility,
-    priceNormalization,
-    setPriceNormalization,
+    priceNormalizationEnabled,
+    setPriceNormalizationEnabled,
+    priceDisplayPeriod,
+    setPriceDisplayPeriod,
+    priceDisplayCurrency,
+    setPriceDisplayCurrency,
     exchangeRateSource,
     setExchangeRateSource,
     manualCurrencyRates,

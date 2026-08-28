@@ -18,7 +18,6 @@ import type {
   PriceDisplayCurrency,
   PriceDisplayPeriod,
 } from "./types";
-import type { PriceNormalizationPeriod } from "@/utils";
 
 interface PriceStatsMenuProps {
   period: PriceDisplayPeriod;
@@ -36,8 +35,8 @@ export const PriceStatsMenu = memo(
   }: PriceStatsMenuProps) => {
     const { t } = useLocale();
     const {
-      priceNormalization,
-      setPriceNormalization,
+      priceNormalizationEnabled,
+      setPriceNormalizationEnabled,
       exchangeRateSource,
       setExchangeRateSource,
       manualCurrencyRates,
@@ -58,15 +57,9 @@ export const PriceStatsMenu = memo(
       key: PriceDisplayCurrency;
       label: string;
     }> = [
-      { key: "USD", label: t("statsBar.currencyUsd") },
+      { key: "original", label: t("statsBar.currencyOriginal") },
       { key: "CNY", label: t("statsBar.currencyCny") },
-    ];
-    const normalizedPeriods: Array<{
-      key: Exclude<PriceNormalizationPeriod, "original">;
-      label: string;
-    }> = [
-      { key: "monthly", label: t("statsBar.priceMonthly") },
-      { key: "yearly", label: t("statsBar.priceYearly") },
+      { key: "USD", label: t("statsBar.currencyUsd") },
     ];
 
     return (
@@ -188,34 +181,13 @@ export const PriceStatsMenu = memo(
             onSelect={(event) => event.preventDefault()}>
             <span>{t("statsBar.priceNormalize")}</span>
             <Switch
-              checked={priceNormalization !== "original"}
-              onCheckedChange={(checked) =>
-                setPriceNormalization(
-                  checked
-                    ? priceNormalization === "yearly"
-                      ? "yearly"
-                      : "monthly"
-                    : "original"
-                )
-              }
+              checked={priceNormalizationEnabled}
+              onCheckedChange={setPriceNormalizationEnabled}
             />
           </DropdownMenuItem>
-          {priceNormalization !== "original" && (
-            <>
-              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                {t("statsBar.priceNormalizePeriod")}
-              </DropdownMenuLabel>
-              {normalizedPeriods.map(({ key, label }) => (
-                <DropdownMenuItem
-                  key={key}
-                  className="flex items-center justify-between cursor-pointer"
-                  onSelect={() => setPriceNormalization(key)}>
-                  <span>{label}</span>
-                  {priceNormalization === key && <Check className="h-4 w-4" />}
-                </DropdownMenuItem>
-              ))}
-            </>
-          )}
+          <div className="px-2 py-1 text-xs text-muted-foreground">
+            {t("statsBar.priceNormalizeFollowPeriod")}
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
     );

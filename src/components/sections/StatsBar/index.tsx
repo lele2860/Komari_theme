@@ -2,57 +2,37 @@ import { useEffect, useMemo, useState } from "react";
 import { cn, formatBytes, formatMoney } from "@/utils";
 import { useAppConfig } from "@/config";
 import { useIsMobile } from "@/hooks/useMobile";
+import { useTheme } from "@/hooks/useTheme";
 import { CurrentTimeChip, StatChip } from "./StatChips";
 import { GroupSelector } from "./GroupSelector";
 import { SortToggleMenu } from "./SortToggleMenu";
 import { StatsToggleMenu } from "./StatsToggleMenu";
 import { useLocale } from "@/config/hooks";
-import type { StatsBarProps, SortKey } from "./types";
+import type {
+  StatsBarProps,
+  StatsSnapshot,
+  SortKey,
+} from "./types";
 import { Card } from "@/components/ui/card";
 import { PriceStatsMenu } from "./PriceStatsMenu";
 import type {
-  PriceDisplayCurrency,
   PriceDisplayPeriod,
 } from "./types";
 export type { StatsBarProps, SortKey };
 
-const PRICE_SETTINGS_STORAGE_KEY = "purcarte-price-display";
+const formatOriginalPrice = (
+  stats: StatsSnapshot,
+  period: PriceDisplayPeriod
+) => {
+  const key = period === "total" ? "total" : period;
+  const entries = Object.entries(stats.priceByCurrency || {}).filter(
+    ([, value]) => Number(value[key]) > 0
+  );
+  if (!entries.length) return "—";
 
-const isPriceDisplayPeriod = (
-  value: unknown
-): value is PriceDisplayPeriod =>
-  value === "total" || value === "monthly" || value === "daily";
-
-const isPriceDisplayCurrency = (
-  value: unknown
-): value is PriceDisplayCurrency => value === "USD" || value === "CNY";
-
-const readStoredPriceSettings = (enabled: boolean) => {
-  if (!enabled || typeof window === "undefined") return null;
-
-  try {
-    const stored = window.localStorage.getItem(PRICE_SETTINGS_STORAGE_KEY);
-    if (!stored) return null;
-
-    const parsed: unknown = JSON.parse(stored);
-    if (!parsed || typeof parsed !== "object") return null;
-
-    const settings = parsed as {
-      period?: unknown;
-      currency?: unknown;
-    };
-
-    return {
-      period: isPriceDisplayPeriod(settings.period)
-        ? settings.period
-        : undefined,
-      currency: isPriceDisplayCurrency(settings.currency)
-        ? settings.currency
-        : undefined,
-    };
-  } catch {
-    return null;
-  }
+  return entries
+    .map(([currency, value]) => `${currency}${Number(value[key]).toFixed(2)}`)
+    .join(" + ");
 };
 
 interface StatEntry {
@@ -83,32 +63,15 @@ export const StatsBar = (props: StatsBarProps) => {
     enableGroupedBar,
     enableSortControl,
     siteStatus,
-    enableLocalStorage,
   } = useAppConfig();
   const isMobile = useIsMobile();
   const { t } = useLocale();
-  const storedPriceSettings = readStoredPriceSettings(enableLocalStorage);
-  const [pricePeriod, setPricePeriod] =
-    useState<PriceDisplayPeriod>(
-      () => storedPriceSettings?.period ?? "monthly"
-    );
-  const [priceCurrency, setPriceCurrency] =
-    useState<PriceDisplayCurrency>(
-      () => storedPriceSettings?.currency ?? "USD"
-    );
-
-  useEffect(() => {
-    if (!enableLocalStorage) return;
-
-    try {
-      window.localStorage.setItem(
-        PRICE_SETTINGS_STORAGE_KEY,
-        JSON.stringify({ period: pricePeriod, currency: priceCurrency })
-      );
-    } catch {
-      // Ignore unavailable local storage.
-    }
-  }, [enableLocalStorage, priceCurrency, pricePeriod]);
+  const {
+    priceDisplayPeriod: pricePeriod,
+    setPriceDisplayPeriod: setPricePeriod,
+    priceDisplayCurrency: priceCurrency,
+    setPriceDisplayCurrency: setPriceCurrency,
+  } = useTheme();
 
   const canViewPricing =
     siteStatus === "authenticated" || siteStatus === "private-authenticated";
@@ -221,14 +184,12 @@ export const StatsBar = (props: StatsBarProps) => {
     if (!canViewPricing) return null;
 
     const amountByPeriod: Record<PriceDisplayPeriod, number> = {
-      total:
-        priceCurrency === "USD" ? stats.totalPriceUsd : stats.totalPriceCny,
+      total: priceCurrency === "USD" ? stats.totalPriceUsd : stats.totalPriceCny,
       monthly:
         priceCurrency === "USD"
           ? stats.monthlyPriceUsd
           : stats.monthlyPriceCny,
-      daily:
-        priceCurrency === "USD" ? stats.dailyPriceUsd : stats.dailyPriceCny,
+      daily: priceCurrency === "USD" ? stats.dailyPriceUsd : stats.dailyPriceCny,
     };
     const periodLabel =
       pricePeriod === "total"
@@ -237,12 +198,17 @@ export const StatsBar = (props: StatsBarProps) => {
         ? t("statsBar.priceMonthly")
         : t("statsBar.priceDaily");
 
+    const amountText =
+      priceCurrency === "original"
+        ? formatOriginalPrice(stats, pricePeriod)
+        : formatMoney(amountByPeriod[pricePeriod], priceCurrency);
+
     return {
       key: "serverCost",
       label: t("statsBar.serverCost"),
       lines: loading
         ? ["..."]
-        : [`${periodLabel} ${formatMoney(amountByPeriod[pricePeriod], priceCurrency)}`],
+        : [`${periodLabel} ${amountText}`],
       isLabelVertical: !isMobile && isShowStatsInHeader,
       textLeft: true,
     };

@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import {
   convertPriceToCny,
-  formatPrice,
+  formatPriceForDisplay,
   getDailyPriceCny,
   USD_TO_CNY_RATE,
 } from "@/utils";
 import type { NodeData } from "@/types/node";
+import type { PriceBreakdownEntry } from "@/components/sections/StatsBar/types";
 import type { RpcNodeStatus } from "@/types/rpc";
 import { useNodeData } from "@/contexts/NodeDataContext";
 import { useLiveData } from "@/contexts/LiveDataContext";
@@ -193,6 +194,26 @@ export const useNodeListCommons = (searchTerm: string) => {
       },
       { totalCny: 0, monthlyCny: 0, dailyCny: 0 }
     );
+    const priceByCurrency = combinedNodes.reduce<
+      Record<string, PriceBreakdownEntry>
+    >((breakdown, node) => {
+      const price = Number(node.price);
+      if (!(price > 0)) return breakdown;
+
+      const currency = String(node.currency || "").trim() || "?";
+      const current = breakdown[currency] || {
+        total: 0,
+        monthly: 0,
+        daily: 0,
+      };
+      current.total += price;
+      if (node.billing_cycle > 0) {
+        current.monthly += (price * 30) / node.billing_cycle;
+        current.daily += price / node.billing_cycle;
+      }
+      breakdown[currency] = current;
+      return breakdown;
+    }, {});
     const usdRate = currencyRates.USD || USD_TO_CNY_RATE;
 
     return {
@@ -229,6 +250,7 @@ export const useNodeListCommons = (searchTerm: string) => {
       totalPriceUsd: priceTotals.totalCny / usdRate,
       monthlyPriceUsd: priceTotals.monthlyCny / usdRate,
       dailyPriceUsd: priceTotals.dailyCny / usdRate,
+      priceByCurrency,
     };
   }, [combinedNodes, filteredNodes, currencyRates]);
 
@@ -249,12 +271,23 @@ export const useNodeCommons = (node: NodeData & { stats?: any }) => {
   const { stats } = node;
   const { t } = useLocale();
   const isOnline = stats ? stats.online : false;
-  const { priceNormalization } = useTheme();
-  const price = formatPrice(
+  const {
+    currencyRates,
+    priceDisplayCurrency,
+    priceDisplayPeriod,
+    priceNormalizationEnabled,
+  } = useTheme();
+  const normalization =
+    priceNormalizationEnabled && priceDisplayPeriod !== "total"
+      ? priceDisplayPeriod
+      : "original";
+  const price = formatPriceForDisplay(
     node.price,
     node.currency,
     node.billing_cycle,
-    priceNormalization
+    normalization,
+    priceDisplayCurrency,
+    currencyRates
   );
 
   const cpuUsage = stats && isOnline ? stats.cpu : 0;
