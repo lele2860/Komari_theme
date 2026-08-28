@@ -1,11 +1,26 @@
-import { useState, useEffect, createContext, useContext } from "react";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  createContext,
+  useContext,
+} from "react";
 import { useIsMobile } from "@/hooks/useMobile";
 import { useAppConfig } from "@/config";
 import { DEFAULT_CONFIG, allAppearance } from "@/config/default";
 import type { AppearanceType, ColorType, ViewModeType } from "@/config/default";
-import type { PriceNormalizationPeriod } from "@/utils";
+import {
+  DEFAULT_CURRENCY_RATES_TO_CNY,
+  parseCurrencyRates,
+} from "@/utils";
+import type {
+  CurrencyRates,
+  PriceNormalizationPeriod,
+} from "@/utils";
 
 type themeAppearanceType = "light" | "dark";
+export type ExchangeRateSource = "auto" | "manual";
 const defaultThemeAppearance: themeAppearanceType = "light";
 
 export interface ThemeContextType {
@@ -29,6 +44,15 @@ export interface ThemeContextType {
   ) => void;
   priceNormalization: PriceNormalizationPeriod;
   setPriceNormalization: (period: PriceNormalizationPeriod) => void;
+  exchangeRateSource: ExchangeRateSource;
+  setExchangeRateSource: (source: ExchangeRateSource) => void;
+  manualCurrencyRates: string;
+  setManualCurrencyRates: (value: string) => void;
+  currencyRates: CurrencyRates;
+  exchangeRateUpdatedAt: string | null;
+  exchangeRateError: boolean;
+  isExchangeRateLoading: boolean;
+  refreshExchangeRates: () => Promise<void>;
 }
 
 export const ThemeContext = createContext<ThemeContextType>({
@@ -50,6 +74,15 @@ export const ThemeContext = createContext<ThemeContextType>({
   setStatusCardsVisibility: () => {},
   priceNormalization: "original",
   setPriceNormalization: () => {},
+  exchangeRateSource: "auto",
+  setExchangeRateSource: () => {},
+  manualCurrencyRates: "USD=7.2,CAD=5.0",
+  setManualCurrencyRates: () => {},
+  currencyRates: DEFAULT_CURRENCY_RATES_TO_CNY,
+  exchangeRateUpdatedAt: null,
+  exchangeRateError: false,
+  isExchangeRateLoading: false,
+  refreshExchangeRates: async () => {},
 });
 
 /**
@@ -134,6 +167,17 @@ const useStoredState = <T>(
   return [state, setState];
 };
 
+const isCurrencyRates = (value: unknown): value is CurrencyRates => {
+  if (!value || typeof value !== "object") return false;
+  return Object.entries(value).every(
+    ([code, rate]) =>
+      /^[A-Z]{3}$/.test(code) &&
+      typeof rate === "number" &&
+      Number.isFinite(rate) &&
+      rate > 0
+  );
+};
+
 export const useThemeManager = () => {
   const {
     selectedDefaultAppearance,
@@ -189,6 +233,94 @@ export const useThemeManager = () => {
         value === "original" || value === "monthly" || value === "yearly"
     );
 
+  const [exchangeRateSource, setExchangeRateSource] =
+    useStoredState<ExchangeRateSource>(
+      "priceExchangeRateSource",
+      "auto",
+      (value): value is ExchangeRateSource => value === "auto" || value === "manual"
+    );
+  const [manualCurrencyRates, setManualCurrencyRates] = useStoredState(
+    "priceManualCurrencyRates",
+    "USD=7.2,CAD=5.0"
+  );
+  const [cachedCurrencyRates, setCachedCurrencyRates] =
+    useStoredState<CurrencyRates>(
+      "priceAutoCurrencyRates",
+      DEFAULT_CURRENCY_RATES_TO_CNY,
+      isCurrencyRates
+    );
+  const [exchangeRateUpdatedAt, setExchangeRateUpdatedAt] = useStoredState<
+    string | null
+  >("priceAutoCurrencyRatesUpdatedAt", null, (value): value is string | null =>
+    value === null || typeof value === "string"
+  );
+  const [isExchangeRateLoading, setIsExchangeRateLoading] = useState(false);
+  const [exchangeRateError, setExchangeRateError] = useState(false);
+
+  const refreshExchangeRates = useCallback(async () => {
+    setIsExchangeRateLoading(true);
+    setExchangeRateError(false);
+
+    try {
+      const response = await fetch(
+        "https://api.frankfurter.dev/v1/latest?base=CNY"
+      );
+      if (!response.ok) {
+        throw new Error(`Exchange rate request failed: ${response.status}`);
+      }
+
+      const payload: unknown = await response.json();
+      if (!payload || typeof payload !== "object") {
+        throw new Error("Exchange rate response was invalid");
+      }
+
+      const rates = (payload as { rates?: unknown }).rates;
+      if (!rates || typeof rates !== "object") {
+        throw new Error("Exchange rate response did not include rates");
+      }
+
+      const nextRates: CurrencyRates = { CNY: 1 };
+      Object.entries(rates).forEach(([code, quoteRate]) => {
+        const numericRate = Number(quoteRate);
+        if (numericRate > 0 && Number.isFinite(numericRate)) {
+          // The API returns quote units per CNY; invert to CNY per quote unit.
+          nextRates[code.toUpperCase()] = 1 / numericRate;
+        }
+      });
+
+      if (Object.keys(nextRates).length <= 1) {
+        throw new Error("Exchange rate response was empty");
+      }
+
+      setCachedCurrencyRates(nextRates);
+      const date = (payload as { date?: unknown }).date;
+      setExchangeRateUpdatedAt(typeof date === "string" ? date : new Date().toISOString());
+    } catch (error) {
+      console.warn("Unable to update exchange rates; using cached values.", error);
+      setExchangeRateError(true);
+    } finally {
+      setIsExchangeRateLoading(false);
+    }
+  }, [setCachedCurrencyRates, setExchangeRateUpdatedAt]);
+
+  useEffect(() => {
+    if (exchangeRateSource !== "auto") return;
+
+    void refreshExchangeRates();
+    const timer = window.setInterval(() => {
+      void refreshExchangeRates();
+    }, 24 * 60 * 60 * 1000);
+    return () => window.clearInterval(timer);
+  }, [exchangeRateSource, refreshExchangeRates]);
+
+  const currencyRates = useMemo(() => {
+    const configuredRates =
+      exchangeRateSource === "manual"
+        ? parseCurrencyRates(manualCurrencyRates)
+        : cachedCurrencyRates;
+    return { ...DEFAULT_CURRENCY_RATES_TO_CNY, ...configuredRates };
+  }, [cachedCurrencyRates, exchangeRateSource, manualCurrencyRates]);
+
   // Add newly introduced statistics for visitors who already have saved display settings.
   useEffect(() => {
     if (statusCardsVisibility.trafficUsage === undefined) {
@@ -220,6 +352,15 @@ export const useThemeManager = () => {
     setStatusCardsVisibility: handleSetStatusCardsVisibility,
     priceNormalization,
     setPriceNormalization,
+    exchangeRateSource,
+    setExchangeRateSource,
+    manualCurrencyRates,
+    setManualCurrencyRates,
+    currencyRates,
+    exchangeRateUpdatedAt,
+    exchangeRateError,
+    isExchangeRateLoading,
+    refreshExchangeRates,
   };
 };
 export const useTheme = () => {

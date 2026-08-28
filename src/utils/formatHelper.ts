@@ -55,6 +55,20 @@ export const formatUptime = (seconds: number) => {
   return uptimeString;
 };
 
+/** Display mode for individual node prices. */
+export type PriceNormalizationPeriod = "original" | "monthly" | "yearly";
+
+/** Exchange rates expressed as CNY for one unit of the currency. */
+export type CurrencyRates = Record<string, number>;
+
+// These values are only an offline fallback. Automatic rates or manual values
+// take precedence whenever they are available.
+export const DEFAULT_CURRENCY_RATES_TO_CNY: CurrencyRates = {
+  CNY: 1,
+  USD: 7.2,
+  CAD: 5,
+};
+
 export const formatPrice = (
   price: number,
   currency: string,
@@ -93,9 +107,6 @@ export const formatPrice = (
   return `${currency}${price.toFixed(2)}/${cycleStr}`;
 };
 
-/** Display mode for individual node prices. */
-export type PriceNormalizationPeriod = "original" | "monthly" | "yearly";
-
 export const formatTrafficLimit = (
   limit?: number,
   type?: "sum" | "max" | "min" | "up" | "down"
@@ -126,40 +137,97 @@ export type PriceDisplayPeriod = "total" | "monthly" | "daily";
 // deployment uses a different accounting exchange rate.
 export const USD_TO_CNY_RATE = 7.2;
 
+/** Normalize common currency symbols/names to ISO 4217 currency codes. */
+export const normalizeCurrencyCode = (currency: string): string | null => {
+  const value = (currency || "").trim().toUpperCase().replace(/\s+/g, "");
+  if (!value) return null;
+
+  if (
+    value === "¥" ||
+    value === "￥" ||
+    value === "CN¥" ||
+    value === "CNY" ||
+    value === "RMB" ||
+    value.includes("人民币")
+  ) {
+    return "CNY";
+  }
+  if (
+    value === "$" ||
+    value === "US$" ||
+    value === "USD" ||
+    value.includes("美元")
+  ) {
+    return "USD";
+  }
+  if (
+    value === "C$" ||
+    value === "CA$" ||
+    value === "CAD$" ||
+    value === "CAD" ||
+    value.includes("加元") ||
+    value.includes("加拿大元")
+  ) {
+    return "CAD";
+  }
+  if (value === "€" || value === "EUR" || value.includes("欧元")) {
+    return "EUR";
+  }
+  if (value === "£" || value === "GBP" || value.includes("英镑")) {
+    return "GBP";
+  }
+  if (value === "HK$" || value === "HKD" || value.includes("港币")) {
+    return "HKD";
+  }
+  if (value === "A$" || value === "AUD$" || value === "AUD" || value.includes("澳元")) {
+    return "AUD";
+  }
+  if (value === "S$" || value === "SGD$" || value === "SGD" || value.includes("新加坡元")) {
+    return "SGD";
+  }
+  if (value === "JP¥" || value === "JPY" || value.includes("日元")) {
+    return "JPY";
+  }
+
+  return /^[A-Z]{3}$/.test(value) ? value : null;
+};
+
+/** Parse a comma/newline separated list such as `USD=7.2,CAD=5.0`. */
+export const parseCurrencyRates = (value: string): CurrencyRates => {
+  const rates: CurrencyRates = { CNY: 1 };
+  value
+    .split(/[;,\n]+/)
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .forEach((entry) => {
+      const separatorIndex = entry.search(/[=:]/);
+      if (separatorIndex < 1) return;
+
+      const code = normalizeCurrencyCode(entry.slice(0, separatorIndex));
+      const rate = Number(entry.slice(separatorIndex + 1).trim());
+      if (code && Number.isFinite(rate) && rate > 0) {
+        rates[code] = rate;
+      }
+    });
+  return rates;
+};
+
 /**
  * Convert a Komari price to CNY. Komari commonly stores "$" and "¥", but
  * currency codes are accepted as well so mixed-price node lists work.
  */
 export const convertPriceToCny = (
   price: number,
-  currency: string
+  currency: string,
+  rates: CurrencyRates = DEFAULT_CURRENCY_RATES_TO_CNY
 ): number | null => {
   if (!Number.isFinite(price)) return null;
 
-  const normalized = (currency || "").trim().toUpperCase();
-  if (!normalized) return null;
+  const code = normalizeCurrencyCode(currency);
+  if (!code) return null;
 
-  if (
-    normalized === "¥" ||
-    normalized === "￥" ||
-    normalized === "CNY" ||
-    normalized === "RMB" ||
-    normalized.includes("人民币")
-  ) {
-    return price;
-  }
-
-  if (
-    normalized === "$" ||
-    normalized === "US$" ||
-    normalized === "USD" ||
-    normalized.includes("美元") ||
-    normalized.includes("$")
-  ) {
-    return price * USD_TO_CNY_RATE;
-  }
-
-  return null;
+  const rate = rates[code] ?? DEFAULT_CURRENCY_RATES_TO_CNY[code];
+  return Number.isFinite(rate) && rate > 0 ? price * rate : null;
 };
 
 /**
@@ -169,13 +237,14 @@ export const convertPriceToCny = (
 export const getDailyPriceCny = (
   price: number,
   currency: string,
-  billingCycle: number
+  billingCycle: number,
+  rates: CurrencyRates = DEFAULT_CURRENCY_RATES_TO_CNY
 ): number | null => {
   const numericPrice = Number(price);
   if (!Number.isFinite(numericPrice)) return null;
   if (numericPrice <= 0) return 0;
 
-  const priceCny = convertPriceToCny(numericPrice, currency);
+  const priceCny = convertPriceToCny(numericPrice, currency, rates);
   const cycle = Number(billingCycle);
   if (priceCny === null || !Number.isFinite(cycle) || cycle <= 0) {
     return null;

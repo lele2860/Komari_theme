@@ -33,6 +33,7 @@ export const useNodeListCommons = (searchTerm: string) => {
   const { liveData } = useLiveData() as LiveDataContextType;
   const { t } = useLocale();
   const { isOfflineNodesBehind, defaultSelectedGroup } = useAppConfig();
+  const { currencyRates } = useTheme();
   const [selectedGroup, setSelectedGroup] = useState(
     defaultSelectedGroup || t("group.all")
   );
@@ -97,12 +98,14 @@ export const useNodeListCommons = (searchTerm: string) => {
           const aValue = getDailyPriceCny(
             a.price,
             a.currency,
-            a.billing_cycle
+            a.billing_cycle,
+            currencyRates
           );
           const bValue = getDailyPriceCny(
             b.price,
             b.currency,
-            b.billing_cycle
+            b.billing_cycle,
+            currencyRates
           );
 
           // Keep nodes without a comparable price at the end in either
@@ -150,6 +153,7 @@ export const useNodeListCommons = (searchTerm: string) => {
     sortOrder,
     t,
     isOfflineNodesBehind,
+    currencyRates,
   ]);
 
   const stats = useMemo(() => {
@@ -175,7 +179,9 @@ export const useNodeListCommons = (searchTerm: string) => {
       (totals, node) => {
         const price = Number(node.price);
         const priceCny =
-          price > 0 ? convertPriceToCny(price, node.currency) : null;
+          price > 0
+            ? convertPriceToCny(price, node.currency, currencyRates)
+            : null;
         if (priceCny === null) return totals;
 
         totals.totalCny += priceCny;
@@ -187,6 +193,7 @@ export const useNodeListCommons = (searchTerm: string) => {
       },
       { totalCny: 0, monthlyCny: 0, dailyCny: 0 }
     );
+    const usdRate = currencyRates.USD || USD_TO_CNY_RATE;
 
     return {
       onlineCount: filteredNodes.filter((n) => n.stats?.online).length,
@@ -219,11 +226,11 @@ export const useNodeListCommons = (searchTerm: string) => {
       totalPriceCny: priceTotals.totalCny,
       monthlyPriceCny: priceTotals.monthlyCny,
       dailyPriceCny: priceTotals.dailyCny,
-      totalPriceUsd: priceTotals.totalCny / USD_TO_CNY_RATE,
-      monthlyPriceUsd: priceTotals.monthlyCny / USD_TO_CNY_RATE,
-      dailyPriceUsd: priceTotals.dailyCny / USD_TO_CNY_RATE,
+      totalPriceUsd: priceTotals.totalCny / usdRate,
+      monthlyPriceUsd: priceTotals.monthlyCny / usdRate,
+      dailyPriceUsd: priceTotals.dailyCny / usdRate,
     };
-  }, [combinedNodes, filteredNodes]);
+  }, [combinedNodes, filteredNodes, currencyRates]);
 
   return {
     loading,

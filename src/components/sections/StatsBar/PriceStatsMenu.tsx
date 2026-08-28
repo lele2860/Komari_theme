@@ -1,6 +1,7 @@
 import { memo } from "react";
-import { Check, DollarSign } from "lucide-react";
+import { Check, DollarSign, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
@@ -34,7 +35,20 @@ export const PriceStatsMenu = memo(
     onCurrencyChange,
   }: PriceStatsMenuProps) => {
     const { t } = useLocale();
-    const { priceNormalization, setPriceNormalization } = useTheme();
+    const {
+      priceNormalization,
+      setPriceNormalization,
+      exchangeRateSource,
+      setExchangeRateSource,
+      manualCurrencyRates,
+      setManualCurrencyRates,
+      exchangeRateUpdatedAt,
+      exchangeRateError,
+      isExchangeRateLoading,
+      refreshExchangeRates,
+      currencyRates,
+    } = useTheme();
+    const usdToCnyRate = currencyRates.USD || USD_TO_CNY_RATE;
     const periods: Array<{ key: PriceDisplayPeriod; label: string }> = [
       { key: "total", label: t("statsBar.priceTotal") },
       { key: "monthly", label: t("statsBar.priceMonthly") },
@@ -96,8 +110,75 @@ export const PriceStatsMenu = memo(
             </DropdownMenuItem>
           ))}
           <div className="px-2 py-1 text-xs text-muted-foreground">
-            {t("statsBar.currencyRate", { rate: USD_TO_CNY_RATE })}
+            {t("statsBar.currencyRate", {
+              rate: usdToCnyRate.toFixed(4),
+            })}
           </div>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+            {t("statsBar.exchangeRateSettings")}
+          </DropdownMenuLabel>
+          <DropdownMenuItem
+            className="flex items-center justify-between cursor-pointer"
+            onSelect={(event) => event.preventDefault()}>
+            <span>{t("statsBar.exchangeRateAuto")}</span>
+            <Switch
+              checked={exchangeRateSource === "auto"}
+              onCheckedChange={(checked) =>
+                setExchangeRateSource(checked ? "auto" : "manual")
+              }
+            />
+          </DropdownMenuItem>
+          {exchangeRateSource === "auto" ? (
+            <div className="px-2 py-1 space-y-1">
+              <div className="text-xs text-muted-foreground">
+                {t("statsBar.exchangeRateProvider")}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {isExchangeRateLoading
+                  ? t("statsBar.exchangeRateUpdating")
+                  : exchangeRateError
+                  ? t("statsBar.exchangeRateFallback")
+                  : exchangeRateUpdatedAt
+                  ? t("statsBar.exchangeRateUpdated", {
+                      date: exchangeRateUpdatedAt,
+                    })
+                  : t("statsBar.exchangeRateNotUpdated")}
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full"
+                disabled={isExchangeRateLoading}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  void refreshExchangeRates();
+                }}>
+                <RefreshCw
+                  className={isExchangeRateLoading ? "animate-spin" : ""}
+                />
+                {t("statsBar.exchangeRateRefresh")}
+              </Button>
+            </div>
+          ) : (
+            <div
+              className="px-2 py-1 space-y-1"
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => event.stopPropagation()}>
+              <Input
+                type="text"
+                value={manualCurrencyRates}
+                onChange={(event) => setManualCurrencyRates(event.target.value)}
+                placeholder="USD=7.2,CAD=5.0"
+                aria-label={t("statsBar.exchangeRateManual")}
+              />
+              <div className="text-xs text-muted-foreground">
+                {t("statsBar.exchangeRateManualHelp")}
+              </div>
+            </div>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
             {t("statsBar.priceNormalization")}
