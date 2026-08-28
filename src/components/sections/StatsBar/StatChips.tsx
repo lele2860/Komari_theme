@@ -22,12 +22,13 @@ export const StatChip = memo(
       return (
         <div
           className={cn(
-            "flex shrink-0 bg-transition px-1.5 py-0.5 text-center items-center",
-            isLabelVertical ? "" : "flex-col"
+            "flex bg-transition px-1.5 py-0.5 text-center items-center",
+            isLabelVertical ? "" : "flex-col",
+            isMobile ? "w-full min-w-0" : "shrink-0"
           )}>
           <div
             className={cn(
-              "text-xs font-semibold",
+              "text-xs font-semibold whitespace-nowrap",
               isMobile ? "" : "tracking-widest"
             )}
             style={
@@ -36,7 +37,7 @@ export const StatChip = memo(
             {label}
           </div>
           <div
-            className={`text-xs font-semibold leading-tight ${
+            className={`min-w-0 text-xs font-semibold leading-tight ${
               textLeft ? "text-left" : ""
             }`}>
             {lines.map((line, index) => (

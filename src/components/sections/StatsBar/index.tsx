@@ -199,7 +199,7 @@ export const StatsBar = (props: StatsBarProps) => {
 
   const renderPriceStat = (isInHeader: boolean) =>
     priceStat ? (
-      <div className="flex min-w-0 items-center justify-center">
+      <div className="flex min-w-0 items-center justify-center gap-0.5">
         <StatChip
           {...priceStat}
           isInHeader={isInHeader}
@@ -260,23 +260,21 @@ export const StatsBar = (props: StatsBarProps) => {
     if (!isMobile) {
       return "repeat(auto-fit, minmax(100px, 1fr))";
     }
-    const visibleCount =
-      resolvedStats.length +
-      (displayOptions.currentTime ? 1 : 0) +
-      (priceStat ? 1 : 0) +
-      (enableGroupedBar && mergeGroupsWithStats ? 1 : 0);
-
-    return visibleCount >= 5 ? "repeat(3, 1fr)" : "repeat(2, 1fr)";
+    // Two columns leave enough horizontal space for traffic and price values
+    // on narrow screens, while the toolbar gets its own reserved top row.
+    return "repeat(2, minmax(0, 1fr))";
   };
 
   return (
     <Card
       className={cn(
         "relative flex items-center text-primary my-4",
-        isMobile ? "text-xs p-2" : "text-sm px-4 min-w-[300px] min-h-[5rem]"
+        isMobile
+          ? "text-xs px-2 pt-10 pb-3 min-w-0"
+          : "text-sm px-4 min-w-[300px] min-h-[5rem]"
       )}>
       <div
-        className="grid w-full gap-2 text-center items-center py-3"
+        className="grid w-full gap-x-2 gap-y-3 text-center items-center"
         style={{
           gridTemplateColumns: getGridTemplateColumns(),
           gridAutoRows: "min-content",
